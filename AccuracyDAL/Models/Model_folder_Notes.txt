@@ -1,0 +1,11 @@
+﻿This si the first folder created in the EF .dll
+-The POCO models are created to reflect the database layout
+The approach is Code First from models p956
+
+-Create the models
+-Configure the data annotations
+-Add the dB context
+
+In the Partial directory, subdirectory of the Models directory.
+-Testrun partial class in here overrides the ToString() 
+	method to out specific requirements for the partial class
