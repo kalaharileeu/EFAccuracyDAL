@@ -65,8 +65,11 @@ namespace AccuracyDAL.Repos
             var idgroup = (from pi in Table select pi.testrunID).Distinct();
             //Get the properties for the EF.Model
             PropertyInfo[] testpoint_fields = Helper.GetPropertlyArray(typeof(Testpoint));
+            //TODO: Fix. if there is not a property in the Testpoint class with this name return null
+            if ((from pi in testpoint_fields where pi.Name == wantedcolumn select pi).Count() == 0)
+                return null;
             //LINQ expression here
-            //Find the Testpoint pooint property equal to wantedcolumn parameter
+            //Find the first Testpoint point property equal to wantedcolumn parameter
             //Find the first and only value
             PropertyInfo property = (from pi in testpoint_fields where pi.Name == wantedcolumn select pi).First();
             //if nothing in the idgroup then the id is not there, return null

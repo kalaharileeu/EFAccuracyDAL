@@ -1,6 +1,4 @@
-﻿using System.Data.Entity;
-using AccuracyDAL.EF;
-using AccuracyDAL.Models;
+﻿using AccuracyDAL.Models;
 using AccuracyDAL.Repos;
 using static System.Console;//C#6, use this to only write "WriteLine("bla")"
 using CsvAnalyzer;
@@ -43,6 +41,7 @@ namespace TestDriveAccuracyDAL
                     getcolumndata(i);
                 }
                 /***************if the input is a file name do this, load it and print*****************/
+
                 if (HelperStatic.FileChecks(line))
                 {
                     WriteLine("The file exist: {0}", line);
@@ -58,7 +57,7 @@ namespace TestDriveAccuracyDAL
                 /*****If integer contains d then delete it*************/
                 if((line.Length == 2) && (line.Contains("d")))
                 {
-                    //remove the d fro the command line, convert the integer
+                    //remove the d from the command line text, convert the integer
                     string temp = line.Remove(1, 1);
                     WriteLine("!" + temp + "!");
                     int j = -1;
@@ -109,7 +108,6 @@ namespace TestDriveAccuracyDAL
                 {
                     foreach (var v in tempFloatList)Write(v + " ;");
                 }
-                WriteLine("Empty, returned null/r/n");
             }
         }
         //Load up the repo
@@ -220,7 +218,7 @@ namespace TestDriveAccuracyDAL
                         if (!(testpoint_fields[i].Name.Contains("ID") || testpoint_fields[i].Name.Contains("Testrun")))
                         {
                             //Return without populating the Repo, columns does not macth property
-                            //WriteLine("Oops returning without populating. {0}", testpoint_fields[i].Name);
+                            WriteLine("Oops returning without populating. {0}", testpoint_fields[i].Name);
                             return;
                         }
                     }

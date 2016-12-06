@@ -49,6 +49,14 @@ namespace AccuracyDAL.Models
         public float Phaseconfigured { get; set; }
         [Required]
         public float Temperature { get; set; }
+        [Required]
+        public float NOFFpcu { get; set; }
+        [Required]
+        public float Wdcpowermeter { get; set; }
+        [Required]
+        public float Powerratioconfigured { get; set; }
+        [Required]
+        public float Vdcconfigured { get; set; }
 
         ////annotation to indicate which properties serve as the 
         ////backing fields for the two navigation properties
