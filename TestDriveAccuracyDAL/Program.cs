@@ -26,7 +26,7 @@ namespace TestDriveAccuracyDAL
 
             while (true)
             {
-                WriteLine("Commands:/n 1) exit /n ID to 2) display /n 3) Path to data 4) integer + d to delete  ");
+                WriteLine("Commands:/n 1--exit ID to 2--display 3--Path to data 4--integer + d to delete  ");
                 string line = ReadLine();
                 //exit
                 if (line == "exit"){ WriteLine("EXIT"); break; }

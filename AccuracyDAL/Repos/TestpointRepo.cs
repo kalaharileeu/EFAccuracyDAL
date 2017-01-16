@@ -59,6 +59,7 @@ namespace AccuracyDAL.Repos
             //Error checking: the Table has to be checked if there are any value and
             //if the specific value is there, else exeptions
             //No data in the table return
+
             if (Table.Count() == 0)
                 return null;
             //find the distinct id in the table for error checking, below
