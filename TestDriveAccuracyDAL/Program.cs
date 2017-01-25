@@ -5,6 +5,7 @@ using CsvAnalyzer;
 using System.Collections.Generic;
 using System.Reflection;
 using System;
+using System.Linq;
 
 namespace TestDriveAccuracyDAL
 {
@@ -18,24 +19,24 @@ namespace TestDriveAccuracyDAL
     {
         static void Main(string[] args)
         {
-          //  Database.SetInitializer(new MyDataInitializer());
+            //  Database.SetInitializer(new MyDataInitializer());
             WriteLine("***Test drive accuracyDAL***");
-            
+
             //Populate datacolumns with wanted data column desriptions, data independant
             deserialize();
 
             while (true)
             {
-                WriteLine("Commands:/n 1--exit ID to 2--display 3--Path to data 4--integer + d to delete  ");
+                WriteLine("Commands:/n 1--exit ID/n2--display/n3--Path to data/n4--integer + d to delete/n5--show  ");
                 string line = ReadLine();
                 //exit
-                if (line == "exit"){ WriteLine("EXIT"); break; }
+                if (line == "exit") { WriteLine("EXIT"); break; }
 
                 /***************if the input is a integer do this get the data*****************/
                 int i = -1;
                 //try parse the line to int
                 int.TryParse(line, out i);
-                if((i != -1) && (i != 0))
+                if ((i != -1) && (i != 0))
                 {
                     //try and get some column data
                     getcolumndata(i);
@@ -46,8 +47,8 @@ namespace TestDriveAccuracyDAL
                 {
                     WriteLine("The file exist: {0}", line);
                     //populate from csv
-                    populateDataTestUnit(line);//line is the console input
-                    //Load into testpoint repo
+                    csvinterface.LoadCSVdata(line);//line is the console input
+                    //Load into testpoint repo, needs the file name to find the dir, to read the text file
                     loadrepos(line);//line is the console input
                     WriteLine("Done with testpoint repo!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     //*********************Do some data extractions************************
@@ -55,7 +56,7 @@ namespace TestDriveAccuracyDAL
                     //wait for me console do not disappear
                 }
                 /*****If integer contains d then delete it*************/
-                if((line.Length == 2) && (line.Contains("d")))
+                if ((line.Length == 2) && (line.Contains("d")))
                 {
                     //remove the d from the command line text, convert the integer
                     string temp = line.Remove(1, 1);
@@ -70,7 +71,7 @@ namespace TestDriveAccuracyDAL
                         //
                         //using (var repo_testrun = new TestrunRepo()) { repo_testrun.Delete(j); }
                         //Delete testpoints
-                       // using (var repo_testpoints = new TestpointRepo()) { repo_testpoints.Delete(j); }
+                        // using (var repo_testpoints = new TestpointRepo()) { repo_testpoints.Delete(j); }
 
                         WriteLine("Now using the testrun repo");
                         using (var repo_testrun = new TestrunRepo())
@@ -88,6 +89,66 @@ namespace TestDriveAccuracyDAL
                                 //WriteLine("I have REMOVED it");
                             }
                         }
+                    }
+                }
+                /*****If integer contains d then delete it*************/
+                if ((line.Length == 3) && (line.Contains("d")))
+                {
+                    //remove the d from the command line text, convert the integer
+                    string temp = line.Remove(2, 1);
+                    WriteLine("!" + temp + "!");
+                    int j = -1;
+                    //try parse the line to int
+                    int.TryParse(temp, out j);
+                    if (j != -1)
+                    {
+                        WriteLine("!" + j);
+                        //try and get some column data
+                        //
+                        //using (var repo_testrun = new TestrunRepo()) { repo_testrun.Delete(j); }
+                        //Delete testpoints
+                        // using (var repo_testpoints = new TestpointRepo()) { repo_testpoints.Delete(j); }
+
+                        WriteLine("Now using the testrun repo");
+                        using (var repo_testrun = new TestrunRepo())
+                        {
+                            WriteLine("Inside using");
+                            Testrun findTR = repo_testrun.GetOne(j);
+                            if (findTR == null)
+                                WriteLine("TR is null,, BOOOOOOOM!");
+                            else
+                            {
+                                WriteLine("TR is NOT null");
+                                repo_testrun.Context.Testruns.Remove(findTR);
+                                repo_testrun.Context.SaveChanges();
+                                //repo_testrun.Delete(j);
+                                //WriteLine("I have REMOVED it");
+                            }
+                        }
+                    }
+                }
+                /*if line contains show*/
+                if (line.Contains("show"))
+                {
+                    ///Programming directly aganist the context here not using GetAll Call
+                    ///from the repo
+                    ///There is not much difference betwween doing this and coding directly
+                    ///against the Context, but Repo pattern provides a consistent way to access
+                    ///and operate on all data across all classes
+                    ///Populate listBox3 if you have connection to database
+                    try
+                    {
+                        var testrunRepo = new TestrunRepo();
+                        //programming angianst the context
+                        List<Testrun> testrun_list = testrunRepo.Context.Testruns.ToList();
+                        foreach (var v in testrun_list)
+                        {
+                            WriteLine(v.ToString() + v.testrunID + " " + v.SerialNumber);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        WriteLine("No database, you can still look at csv data");
                     }
                 }
             }
@@ -128,9 +189,10 @@ namespace TestDriveAccuracyDAL
         private static Testrun Load_TestRun_repo(string folderPathForTextFile)
         {
             //TODO: Get a better way to find the number of rows
-            if ((realpowerdict["SerialNumber"].Columnvalues).Count == 0)
+            //TODO: Get a better way to find the number of rows
+            if (csvinterface.GetColumnData("SerialNumber").Count == 0)
             {
-                WriteLine("NULL from testrun load");
+                //WriteLine("NULL from testrun load");
                 return null;
             }
             //Get the properties for the EF.Model
@@ -146,17 +208,17 @@ namespace TestDriveAccuracyDAL
                 {
                     case "HardwareType":
                         //SetValue takes the object reference and the value for the property
-                        property.SetValue(tempTestRun, (realpowerdict[property.Name].Columnvalues)[0]);//TODO improve:Take the first element, dodgy
+                        property.SetValue(tempTestRun, (csvinterface.GetColumnData(property.Name))[0]);//TODO improve:Take the first element, dodgy
                         break;
                     case "SerialNumber":
-                        property.SetValue(tempTestRun, (realpowerdict[property.Name].Columnvalues)[0]);//TODO improve:Take the first element, dodgy
+                        property.SetValue(tempTestRun, (csvinterface.GetColumnData(property.Name))[0]);//TODO improve:Take the first element, dodgy
                         break;
                     case "FirmwareRef":
-                        property.SetValue(tempTestRun, 
+                        property.SetValue(tempTestRun,
                             HelperStatic.Firmware_version(folderPathForTextFile));
                         break;
                     case "ParameterRef":
-                        property.SetValue(tempTestRun, 
+                        property.SetValue(tempTestRun,
                             HelperStatic.Parameter_version(folderPathForTextFile));
                         break;
                     case "TestName":
@@ -173,7 +235,7 @@ namespace TestDriveAccuracyDAL
                         //not a true field member
                         break;
                     default:
-                        WriteLine("NULL from testrun load: switch {0}", property.Name);
+                        //WriteLine("NULL from testrun load: switch {0}", property.Name);
                         return null;
                 }
             }
@@ -204,21 +266,20 @@ namespace TestDriveAccuracyDAL
                 //Check if all the point in the database table can be populated and corrolate
                 //Look through the tespoint properties and see if they exist in datadictionary
                 WriteLine("Check data against model: ");
-                for(int i = 0; i < testpoint_fields.Length; i++)
+                for (int i = 0; i < testpoint_fields.Length; i++)
                 {
                     //Check if the model property name is in the dictionary from CSV
-                    if(realpowerdict.ContainsKey(testpoint_fields[i].Name))
+                    if (csvinterface.ContainsColumn(testpoint_fields[i].Name) > -1)
                     {
                         //get the number of rows to be used later
-                        numberOfRows = realpowerdict[testpoint_fields[i].Name].Columnvalues.Count;
+                        numberOfRows = csvinterface.GetColumnData(testpoint_fields[i].Name).Count;
                     }
                     else
                     {
                         //If the name contains ID that is ok, do not return, excluded from this
                         if (!(testpoint_fields[i].Name.Contains("ID") || testpoint_fields[i].Name.Contains("Testrun")))
                         {
-                            //Return without populating the Repo, columns does not macth property
-                            WriteLine("Oops returning without populating. {0}", testpoint_fields[i].Name);
+                            //Return without populating the Repo, columns does not match property
                             return;
                         }
                     }
@@ -240,11 +301,11 @@ namespace TestDriveAccuracyDAL
                         //TODO: This is a bit annoying. Do not want to enter a ID
                         if (!(property.Name.Contains("ID") || property.Name.Contains("Testrun")))
                         {
-                            if ((realpowerdict[property.Name].Columnvalues)[k] == "")
-                                (realpowerdict[property.Name].Columnvalues)[k] = "0";
+                            if ((csvinterface.GetColumnData(property.Name))[k] == "")
+                                (csvinterface.GetColumnData(property.Name))[k] = "0";
                             //I like this: set the specific property of object tempTP,
                             //Setvalue takes the object reference and the value for the property
-                            property.SetValue(tempTP, float.Parse((realpowerdict[property.Name].Columnvalues)[k]));
+                            property.SetValue(tempTP, float.Parse((csvinterface.GetColumnData(property.Name))[k]));
                         }
                     }
                     //Foreign key operation here
@@ -262,18 +323,7 @@ namespace TestDriveAccuracyDAL
         /// </summary>
         private static void clearolddata()
         {
-            //datacolumns comes from xml so do not clear it
-            //Clear to reuse if it is not the first iteration
-            if (datacolumns != null)
-            {
-                foreach (Column c in datacolumns.namealiaslist)
-                {
-                    //Clear the values in the columns
-                    c.clearvalues();
-                }
-                realpowerdict = new Dictionary<string, Column>();
-                columns = new List<IBaselist>();
-            }
+            //Nothing to clear the csvAnlalyzer.dll will clear old data if new loaded
         }
 
         /// <summary>
@@ -282,11 +332,13 @@ namespace TestDriveAccuracyDAL
         /// </summary>
         public static void deserialize()
         {
-            //This only gets loaded once and not reloaded on new csv file load
-            //It is just data desciptions and column names
-            XmlManager<DataColumns> columnloader = new XmlManager<DataColumns>();
-            //Initialize the datacolumns class with the wanted columns
-            datacolumns = columnloader.Load("Content/XMLFile1.xml");
+            csvinterface = new CSVinterface();
+            csvinterface.InitializeXmlDataModels("Content/XMLFile1.xml");
+            //////////This only gets loaded once and not reloaded on new csv file load
+            //////////It is just data desciptions and column names
+            ////////XmlManager<DataColumns> columnloader = new XmlManager<DataColumns>();
+            //////////Initialize the datacolumns class with the wanted columns
+            ////////datacolumns = columnloader.Load("Content/XMLFile1.xml");
         }
 
         /// <summary>
@@ -295,54 +347,6 @@ namespace TestDriveAccuracyDAL
         /// load the data to memory
         /// </summary>
         /// <param name="filename"></param>
-        private static void populateDataTestUnit(string fullCSVfilepath)
-        {
-            //Get ready for the next load
-            //Clear: realpowerdict = new Dictionary<string, Column>();
-            //Clear: columns = new List<IBaselist>();
-            //Clear: datacolumns, from CSVAnalyzer class DataColumns
-            clearolddata();
-            using (ReadWriteCsv.CsvFileReader reader = new ReadWriteCsv.CsvFileReader(fullCSVfilepath))
-            {
-                ReadWriteCsv.CsvRow row = new ReadWriteCsv.CsvRow();
-                var rowcount = 0;
-                while (reader.ReadRow(row))
-                {
-                    //the first row is the header
-                    if (rowcount == 0)
-                    {
-                        foreach (string s in row)
-                        {
-                            foreach (Column c in datacolumns.namealiaslist)
-                                //if the name is in the wanted columns save position
-                                if (c.columnname == s) c.columnnumber = row.IndexOf(s);
-                        }
-                    }
-                    else
-                    {
-                        foreach (Column c in datacolumns.namealiaslist)
-                        {
-                            c.colvalues.Add(row[c.columnnumber]);
-                        }
-                    }
-                    //moveto the next row
-                    rowcount++;
-                }
-                // Debug.WriteLine("Baseline rows imported: " + Convert.ToString(rowcount));
-            }
-            //Create a dictionary with the alias name and instance...not needed really. just lambda expr?
-            foreach (Column c in datacolumns.namealiaslist)
-            {
-                realpowerdict.Add(c.alias, c);
-            }
-            //v key is a string, v.Value is a Column
-            foreach (var v in realpowerdict)
-            {
-                //Add to the ValuelistI
-                columns.Add(new ValuelistI(v.Value.Columnvalues, v.Key, v.Value));
-            }
-        }
-
         //to print call getall from inventory repo and then iterate the returned list
         //There is not much difference betwween doing this and coding directly
         //against the Context, but Repository pattern provides a consistent way to access 
@@ -358,11 +362,12 @@ namespace TestDriveAccuracyDAL
             }
         }
 
+        static CSVinterface csvinterface;
         //Data columns is a list of wanted column names/aliases
-        private static DataColumns datacolumns;
+        //private static DataColumns datacolumns;
         //This is a dictionary that contains, alias name and column instance
-        private static Dictionary<string, Column> realpowerdict;
+        //private static Dictionary<string, Column> realpowerdict;
         //Alist of column data class
-        private static List<IBaselist> columns;
+        //private static List<IBaselist> columns;
     }
 }
