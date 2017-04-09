@@ -24,7 +24,7 @@ namespace AccuracyDAL
         /// </summary>
         public AccuracyEntities() : base("name=AccuracyConnection")
         {
-          //  DbInterception.Add(new ConsoleWriterInterceptor());//For custom logger
+          //DbInterception.Add(new ConsoleWriterInterceptor());//For custom logger
             DatabaseLogger.StartLogging();
             DbInterception.Add(DatabaseLogger);
 

@@ -5,7 +5,7 @@ using System.Text;
 using System.Reflection;
 
 /// <summary>
-/// This helpwer class is irectly related to AccuracyDAL
+/// This helpwer class is directly related to AccuracyDAL
 /// </summary>
 
 namespace AccuracyDAL
